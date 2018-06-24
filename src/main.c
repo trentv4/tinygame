@@ -4,5 +4,10 @@
 int main()  
 {  
 	printf("Program started\n");
+	if(!glfwInit())
+	{
+		printf("GLFW was not initialized.\n");
+	}
+	printf("GLFW initialized.\n");
     return 0;
 }   
