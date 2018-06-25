@@ -5,7 +5,7 @@ set mytime=%mytime: =0%
 set filename=build_%mydate%_%mytime%
 echo.
 echo -------------- GCC --------------
-gcc -Wall -o build/%filename% src/*.c -L ".\libs" -lglfw3 -lopengl32 -lgdi32
+gcc -Wall -Os -s -o build/%filename% src/*.c -L ".\libs" -lglfw3 -lopengl32 -lgdi32
 echo.
 echo ----- %filename% -----
 .\build\%filename%
