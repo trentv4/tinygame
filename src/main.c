@@ -5,13 +5,14 @@
 int main()  
 {  
 	printf("Program started\n");
-	GLFWwindow* window = display_createDisplay(1280, 720);
+	Display* display = display_createDisplay(1280, 720);
 
-	while(!display_isWindowClosing(window))
+	while(!display_isWindowClosing(display))
 	{
-		display_tick(window, 1280, 720);
+		display_tick(display);
+		display_drawRectangle(0.5, 0, 0, 0, 0, 1, 1);
 	}
 
-	display_destroy();
+	display_destroy(display);
 	return 0;
 }
