@@ -1,0 +1,32 @@
+There exists a bunker.
+
+	>Why? 
+	>Preppers/Military installation
+The bunker exists because it is a military installation.
+
+	>Where topside? 
+	>City/middle of nowhere/mountains
+The bunker's entrance is in the middle of Chicago.
+
+	>What was the bunker designed for originally? 
+	>Unethical experiments/martial law base/long term survival of officials
+The bunker was constructed to house military operations for enacting martial law.
+
+	>Who are the people we are playing?
+	>Military fragments / civilians who took the empty bunker / 2-4 survivors of an apocalypse
+The bunker is controlled by civilians who took control of the bunker when it was abandoned during martial law.
+
+	>How many people are there?
+	>1, 2-4, 10-20
+The bunker is controlled by 3-6 raiders initially, and is taken over by the player (1-2)
+
+	>What is the surface like?
+The surface is a bombed out, dusty shithole being fought over by three factions.
+
+	>Why are they fighting?
+The soldiers are fighting to win the war. They do not remember the original problem, which was martial law being declared.
+
+	>What does the player do?
+The player maintains the bunker from breaking down, expands the bunker, prevents raiders from invading the bunker, establishes hydroponics and other resource generators, recruits new allies, and explores the surface and underground.
+
+	>What is the win condition?
