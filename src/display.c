@@ -17,31 +17,29 @@ static float vertexBufferData[] = {
 };
 static GLuint vertexBuffer;
 
-static const GLchar* vertexShaderSrc[] = {
-	"#version 330 core\n\0",
-	"layout(location = 0) in vec3 vertexPosition_modelspace;\n\0",
-	"void main() {\n\0",
-		"gl_Position.xyz = vertexPosition_modelSpace;\n\0",
-		"gl_Position.w = 1.0;\n\0",
-	"}\n\0",
-};
+static const GLchar* vertexShaderSrc = 
+	"#version 330 core\n"
+	"layout(location = 0) in vec3 vertexPosition_modelSpace;\n"
+	"void main() {\n"
+		"gl_Position.xyz = vertexPosition_modelSpace;\n"
+		"gl_Position.w = 1.0;\n"
+	"}\n\0";
 
-static const GLchar* fragmentShaderSrc[] = {
-	"#version 330 core\n\0"
-	"out vec3 color;\n\0"
-	"void main(){\n\0"
-		"color = vec3(1,0,0);\n\0"
-	"}\n\0"
-};
+static const GLchar* fragmentShaderSrc = 
+	"#version 330 core\n"
+	"out vec3 color;\n"
+	"void main(){\n"
+		"color = vec3(1,0,0);\n"
+	"}\n\0";
 
 int buildProgram()
 {
 	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShaderID, 1, vertexShaderSrc, NULL);
+	glShaderSource(vertexShaderID, 1, &vertexShaderSrc, NULL);
 	glCompileShader(vertexShaderID);
 
 	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShaderID, 1, fragmentShaderSrc, NULL);
+	glShaderSource(fragmentShaderID, 1, &fragmentShaderSrc, NULL);
 	glCompileShader(fragmentShaderID);
 
 	GLuint programID = glCreateProgram();
@@ -49,6 +47,11 @@ int buildProgram()
 	glAttachShader(programID, fragmentShaderID);
 	glLinkProgram(programID);
 	printf("Linked program\n");
+
+	glDetachShader(programID, vertexShaderID);
+	glDetachShader(programID, fragmentShaderID);
+	glDeleteShader(vertexShaderID);
+	glDeleteShader(fragmentShaderID);
 
 	return programID;
 }
@@ -74,6 +77,8 @@ Display* display_createDisplay(int width, int height)
 	glfwSetKeyCallback(window, callback_key);
 	glfwSwapInterval(1);
 
+	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	
 	GLuint vertexArrayID;
 	glGenVertexArrays(1, &vertexArrayID);
 	glBindVertexArray(vertexArrayID);
