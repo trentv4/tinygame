@@ -12,7 +12,7 @@ echo -------------------------------------------------------------------------
 echo -------------------------------------------------------------------------
 echo.
 
-gcc -Wall -Os -s -o build/%filename% src/*.c -L ".\libs" -lglfw3 -lopengl32 -lgdi32
+gcc -Wall -Os -s -o build/%filename% src/*.c src/glad/glad.c -L ".\libs" -lglfw3 -lopengl32 -lgdi32
 
 echo.
 echo -------------------------------------------------------------------------

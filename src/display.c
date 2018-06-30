@@ -1,11 +1,56 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "GLFW/glfw3.h"
+#include "glad/glad.h"
 #include "display.h"
 
-void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) 
-{
+void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
+void error_callback(int error, const char* description)
+{
+	fprintf(stderr, "Error: %s\n", description);
+}
+
+static float vertexBufferData[] = {
+	-1, -1, 0,
+	1, -1, 0,
+	0, 1, 0,
+};
+static GLuint vertexBuffer;
+
+static const GLchar* vertexShaderSrc[] = {
+	"#version 330 core\n\0",
+	"layout(location = 0) in vec3 vertexPosition_modelspace;\n\0",
+	"void main() {\n\0",
+		"gl_Position.xyz = vertexPosition_modelSpace;\n\0",
+		"gl_Position.w = 1.0;\n\0",
+	"}\n\0",
+};
+
+static const GLchar* fragmentShaderSrc[] = {
+	"#version 330 core\n\0"
+	"out vec3 color;\n\0"
+	"void main(){\n\0"
+		"color = vec3(1,0,0);\n\0"
+	"}\n\0"
+};
+
+int buildProgram()
+{
+	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShaderID, 1, vertexShaderSrc, NULL);
+	glCompileShader(vertexShaderID);
+
+	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShaderID, 1, fragmentShaderSrc, NULL);
+	glCompileShader(fragmentShaderID);
+
+	GLuint programID = glCreateProgram();
+	glAttachShader(programID, vertexShaderID);
+	glAttachShader(programID, fragmentShaderID);
+	glLinkProgram(programID);
+	printf("Linked program\n");
+
+	return programID;
 }
 
 Display* display_createDisplay(int width, int height)
@@ -14,32 +59,36 @@ Display* display_createDisplay(int width, int height)
 
 	printf("GLFW initialized.\n");
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-
-	// if needed, glfwWindowHint glfw_context_version_maj/min 2 for min version
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwSetErrorCallback(error_callback);
+	
 	GLFWwindow* window = glfwCreateWindow(width, height, "Window", NULL, NULL);
 	if(!window) printf("Unable to create window");
-	printf("Window created.");
+	printf("Window created.\n");
 
 	glfwMakeContextCurrent(window);
-	//glad goes here to load extensions if needed
-
-	glMatrixMode(GL_PROJECTION);
-	glDisable(GL_DEPTH_TEST);
-	glOrtho(0, width, height, 0, 1, -1);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glMatrixMode(GL_MODELVIEW);
-
+	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+	
 	// callbacks
 	glfwSetKeyCallback(window, callback_key);
 	glfwSwapInterval(1);
 
+	GLuint vertexArrayID;
+	glGenVertexArrays(1, &vertexArrayID);
+	glBindVertexArray(vertexArrayID);
+
+	glGenBuffers(1, &vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
+
+	GLuint programID = buildProgram();
+	
 	Display* display = malloc(sizeof(Display));
 	display-> window = window;
 	display-> width = width;
 	display-> height = height;
+	display-> programID = programID;
 
 	return display;
 }
@@ -48,39 +97,21 @@ void display_tick(Display* display)
 {
 	glfwSwapBuffers(display-> window);
 	glfwPollEvents();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glfwGetFramebufferSize(display-> window, &(display-> width), &(display-> height));
-	glViewport(0, 0, display-> width, display-> height);
+	glUseProgram(display-> programID);
 
-	glClear(GL_COLOR_BUFFER_BIT);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDisableVertexAttribArray(0);
 }
 
 void display_destroy(Display* display)
 {
 	glfwDestroyWindow(display-> window);
 	glfwTerminate();
-}
-
-void display_drawRectangle(float r, float g, float b, int x, int y, int x2, int y2)
-{
-	glPushMatrix();
-	glColor4f(r, g, b, 1);
-	glBegin(GL_TRIANGLE_STRIP);
-
-	glTexCoord2f(0, 0);
-	glVertex2d(x, y);
-
-	glTexCoord2f(1, 0);
-	glVertex2d(x + x2, y);
-
-	glTexCoord2f(0, 1);
-	glVertex2d(x, y + y2);
-
-	glTexCoord2f(1, 1);
-	glVertex2d(x + x2, y + y2);
-
-	glEnd();
-	glPopMatrix();
 }
 
 int display_isWindowClosing(Display* display)
