@@ -14,6 +14,7 @@ echo.
 
 gcc -Wall -Os -s -o build/%filename% src/*.c src/glad/glad.c -L ".\libs" -lglfw3 -lopengl32 -lgdi32
 
+if NOT "%1" == "-ex" (exit)
 echo.
 echo -------------------------------------------------------------------------
 echo -------------------------------------------------------------------------
