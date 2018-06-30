@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "glad/glad.h"
 #include "display.h"
+#include "linmath.h"
 
 void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
@@ -20,9 +21,9 @@ static GLuint vertexBuffer;
 static const GLchar* vertexShaderSrc = 
 	"#version 330 core\n"
 	"layout(location = 0) in vec3 vertexPosition_modelSpace;\n"
+	"uniform mat4 mvp;\n"
 	"void main() {\n"
-		"gl_Position.xyz = vertexPosition_modelSpace;\n"
-		"gl_Position.w = 1.0;\n"
+		"gl_Position = mvp * vec4(vertexPosition_modelSpace, 1);\n"
 	"}\n\0";
 
 static const GLchar* fragmentShaderSrc = 
@@ -106,10 +107,28 @@ void display_tick(Display* display)
 
 	glUseProgram(display-> programID);
 
+
+	mat4x4 model, view, projection, mvp;
+
+	vec3 eye = {4,3,3};
+	vec3 target = {0,0,0};
+	vec3 orientation = {0,1,0};
+
+	mat4x4_perspective(projection, 45, (float) display-> width / (float) display-> height, 0.1, 100);
+	mat4x4_identity(model);
+	mat4x4_look_at(view, eye, target, orientation);
+	mat4x4_identity(mvp);
+	mat4x4_mul(mvp, mvp, projection);
+	mat4x4_mul(mvp, mvp, view);
+	mat4x4_mul(mvp, mvp, model);
+
+	GLuint matrixID = glGetUniformLocation(display-> programID, "mvp");
+	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
+
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, sizeof(vertexBufferData) / 12);
 	glDisableVertexAttribArray(0);
 }
 
