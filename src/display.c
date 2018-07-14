@@ -132,7 +132,7 @@ int buildProgram()
 	glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &vertStatus);
 	if(vertStatus == GL_FALSE)
 	{
-		printf("Vertex shader failed to compile\n");
+		printf("Vertex shader failed to compile, status %d\n", vertStatus);
 		exit(-1);
 	}
 
@@ -144,7 +144,7 @@ int buildProgram()
 	glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &fragStatus);
 	if(fragStatus == GL_FALSE)
 	{
-		printf("Fragment shader failed to compile\n");
+		printf("Fragment shader failed to compile, status %d\n", vertStatus);
 		exit(-1);
 	}
 
@@ -155,13 +155,10 @@ int buildProgram()
 	printf("Linked program\n");
 
 	GLint progStatus = GL_FALSE;
-	glGetProgramiv(programID, GL_COMPILE_STATUS, &progStatus);
+	glGetProgramiv(programID, GL_LINK_STATUS, &progStatus);
 	if(progStatus == GL_FALSE)
 	{
-		printf("Program failed to link\n");
-		GLint length = 0;
-		glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &length);
-		printf("%d\n", length);
+		printf("Program failed to link, status %d\n", progStatus);
 		exit(-1);
 	}
 
@@ -211,7 +208,7 @@ Display* display_createDisplay(int width, int height)
 	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(uvBufferData), uvBufferData, GL_STATIC_DRAW);
 
-	texture = texture_loadDDS("stone.dds");
+	texture = texture_loadDDS("textureTest.dds");
 
 	GLuint programID = buildProgram();
 	
