@@ -3,6 +3,7 @@
 #include "glad/glad.h"
 #include "display.h"
 #include "linmath.h"
+#include "texture.h"
 
 void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
@@ -50,65 +51,75 @@ static GLfloat vertexBufferData[] = {
     1.0f,-1.0f, 1.0f
 };
 
-static const GLfloat colorBufferData[] = {
-    0.583f,  0.771f,  0.014f,
-    0.609f,  0.115f,  0.436f,
-    0.327f,  0.483f,  0.844f,
-    0.822f,  0.569f,  0.201f,
-    0.435f,  0.602f,  0.223f,
-    0.310f,  0.747f,  0.185f,
-    0.597f,  0.770f,  0.761f,
-    0.559f,  0.436f,  0.730f,
-    0.359f,  0.583f,  0.152f,
-    0.483f,  0.596f,  0.789f,
-    0.559f,  0.861f,  0.639f,
-    0.195f,  0.548f,  0.859f,
-    0.014f,  0.184f,  0.576f,
-    0.771f,  0.328f,  0.970f,
-    0.406f,  0.615f,  0.116f,
-    0.676f,  0.977f,  0.133f,
-    0.971f,  0.572f,  0.833f,
-    0.140f,  0.616f,  0.489f,
-    0.997f,  0.513f,  0.064f,
-    0.945f,  0.719f,  0.592f,
-    0.543f,  0.021f,  0.978f,
-    0.279f,  0.317f,  0.505f,
-    0.167f,  0.620f,  0.077f,
-    0.347f,  0.857f,  0.137f,
-    0.055f,  0.953f,  0.042f,
-    0.714f,  0.505f,  0.345f,
-    0.783f,  0.290f,  0.734f,
-    0.722f,  0.645f,  0.174f,
-    0.302f,  0.455f,  0.848f,
-    0.225f,  0.587f,  0.040f,
-    0.517f,  0.713f,  0.338f,
-    0.053f,  0.959f,  0.120f,
-    0.393f,  0.621f,  0.362f,
-    0.673f,  0.211f,  0.457f,
-    0.820f,  0.883f,  0.371f,
-    0.982f,  0.099f,  0.879f
+static const GLfloat uvBufferData[] = {
+    0.000059f, 1.0f-0.000004f,
+    0.000103f, 1.0f-0.336048f,
+    0.335973f, 1.0f-0.335903f,
+    1.000023f, 1.0f-0.000013f,
+    0.667979f, 1.0f-0.335851f,
+    0.999958f, 1.0f-0.336064f,
+    0.667979f, 1.0f-0.335851f,
+    0.336024f, 1.0f-0.671877f,
+    0.667969f, 1.0f-0.671889f,
+    1.000023f, 1.0f-0.000013f,
+    0.668104f, 1.0f-0.000013f,
+    0.667979f, 1.0f-0.335851f,
+    0.000059f, 1.0f-0.000004f,
+    0.335973f, 1.0f-0.335903f,
+    0.336098f, 1.0f-0.000071f,
+    0.667979f, 1.0f-0.335851f,
+    0.335973f, 1.0f-0.335903f,
+    0.336024f, 1.0f-0.671877f,
+    1.000004f, 1.0f-0.671847f,
+    0.999958f, 1.0f-0.336064f,
+    0.667979f, 1.0f-0.335851f,
+    0.668104f, 1.0f-0.000013f,
+    0.335973f, 1.0f-0.335903f,
+    0.667979f, 1.0f-0.335851f,
+    0.335973f, 1.0f-0.335903f,
+    0.668104f, 1.0f-0.000013f,
+    0.336098f, 1.0f-0.000071f,
+    0.000103f, 1.0f-0.336048f,
+    0.000004f, 1.0f-0.671870f,
+    0.336024f, 1.0f-0.671877f,
+    0.000103f, 1.0f-0.336048f,
+    0.336024f, 1.0f-0.671877f,
+    0.335973f, 1.0f-0.335903f,
+    0.667969f, 1.0f-0.671889f,
+    1.000004f, 1.0f-0.671847f,
+    0.667979f, 1.0f-0.335851f
 };
 
 static GLuint vertexBuffer;
-static GLuint colorBuffer;
+static GLuint uvBuffer;
+static GLuint texture;
 
 static const GLchar* vertexShaderSrc = 
 	"#version 330 core\n"
-	"layout(location = 0) in vec3 vertexPosition_modelSpace;\n"
-	"layout(location = 1) in vec3 vertexColor;\n"
+
+	"layout(location = 0) in vec3 model;\n"
+	"layout(location = 1) in vec2 vertexUV;\n"
+
 	"uniform mat4 mvp;\n"
-	"out vec3 fragmentColor;\n"
+
+	"out vec2 UV;\n"
+
 	"void main() {\n"
-		"gl_Position = mvp * vec4(vertexPosition_modelSpace, 1);\n"
-		"fragmentColor = vertexColor;\n"
+		"gl_Position = mvp * vec4(model, 1);\n"
+		"UV = vertexUV;\n"
 	"}\n\0";
 
 static const GLchar* fragmentShaderSrc = 
 	"#version 330 core\n"
-	"in vec3 fragmentColor;"
+
+	"in vec2 UV;\n"
+
 	"out vec3 color;\n"
-	"void main(){\n"
-		"color = fragmentColor;\n"
+
+	"uniform sampler2D textureSampler;\n"
+
+	"void main() {\n"
+		"color = texture(textureSampler, UV).rgb;\n"
 	"}\n\0";
 
 int buildProgram()
@@ -117,15 +128,42 @@ int buildProgram()
 	glShaderSource(vertexShaderID, 1, &vertexShaderSrc, NULL);
 	glCompileShader(vertexShaderID);
 
+	GLint vertStatus = GL_FALSE;
+	glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &vertStatus);
+	if(vertStatus == GL_FALSE)
+	{
+		printf("Vertex shader failed to compile\n");
+		exit(-1);
+	}
+
 	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShaderID, 1, &fragmentShaderSrc, NULL);
 	glCompileShader(fragmentShaderID);
+
+	GLint fragStatus = GL_FALSE;
+	glGetShaderiv(fragmentShaderID, GL_COMPILE_STATUS, &fragStatus);
+	if(fragStatus == GL_FALSE)
+	{
+		printf("Fragment shader failed to compile\n");
+		exit(-1);
+	}
 
 	GLuint programID = glCreateProgram();
 	glAttachShader(programID, vertexShaderID);
 	glAttachShader(programID, fragmentShaderID);
 	glLinkProgram(programID);
 	printf("Linked program\n");
+
+	GLint progStatus = GL_FALSE;
+	glGetProgramiv(programID, GL_COMPILE_STATUS, &progStatus);
+	if(progStatus == GL_FALSE)
+	{
+		printf("Program failed to link\n");
+		GLint length = 0;
+		glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &length);
+		printf("%d\n", length);
+		exit(-1);
+	}
 
 	glDetachShader(programID, vertexShaderID);
 	glDetachShader(programID, fragmentShaderID);
@@ -169,9 +207,11 @@ Display* display_createDisplay(int width, int height)
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
 
-	glGenBuffers(1, &colorBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(colorBufferData), colorBufferData, GL_STATIC_DRAW);
+	glGenBuffers(1, &uvBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(uvBufferData), uvBufferData, GL_STATIC_DRAW);
+
+	texture = texture_loadDDS("stone.dds");
 
 	GLuint programID = buildProgram();
 	
@@ -192,7 +232,6 @@ void display_tick(Display* display)
 
 	glUseProgram(display-> programID);
 
-
 	mat4x4 model, view, projection, mvp;
 
 	vec3 eye = {4,3,2};
@@ -210,18 +249,27 @@ void display_tick(Display* display)
 	GLuint matrixID = glGetUniformLocation(display-> programID, "mvp");
 	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
 
-	// vec3 vertexPosition_modelSpace
+	// vec3 model
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
-	// vec3 color
+	// vec3 vertexUV
 	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glDrawArrays(GL_TRIANGLES, 0, sizeof(vertexBufferData) / 12);
 	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+
+	int error = glGetError();
+	if(error != 0) {
+		printf("%d\n", error);
+		exit(-1);
+	}
 }
 
 void display_destroy(Display* display)
