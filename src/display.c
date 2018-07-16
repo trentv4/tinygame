@@ -5,6 +5,7 @@
 #include "linmath.h"
 #include "texture.h"
 #include "object.h"
+#include "input.h"
 
 void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
@@ -212,6 +213,7 @@ void display_tick(Display* display)
 {
 	glfwSwapBuffers(display-> window);
 	glfwPollEvents();
+	input_update(display);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUseProgram(display-> programID);
@@ -247,12 +249,6 @@ void display_tick(Display* display)
 	glDrawArrays(GL_TRIANGLES, 0, cube-> triangleCount);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-
-	int error = glGetError();
-	if(error != 0) {
-		printf("%d\n", error);
-		exit(-1);
-	}
 }
 
 void display_destroy(Display* display)

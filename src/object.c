@@ -27,6 +27,7 @@ Object* object_buildObject(GLfloat vertexBufferData[], int vertexCount, GLfloat 
 	object-> textureID = texture_loadDDS(texturePath);
 	object-> triangleCount = vertexCount / 12;
 
-	printf("%d\n", object-> triangleCount);
+	printf("Created object with texture \"%s\" with %d triangles (%d vertices)\n", 
+		texturePath, object-> triangleCount, vertexCount);
 	return object;
 }
