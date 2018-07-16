@@ -1,99 +1,94 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
-#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
-#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
-#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
+#define DXT1 0x31545844
+#define DXT3 0x33545844
+#define DXT5 0x35545844
+
+#define GL_DXT1 GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+#define GL_DXT3 GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+#define GL_DXT5 GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
 
 GLuint texture_loadDDS(char* path)
 {
 	unsigned char header[124];
-
-	FILE *fp; 
-
-	/* try to open the file */ 
-	fp = fopen(path, "rb"); 
-	if (fp == NULL){
-		printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", path); getchar(); 
-		return 0;
+	FILE* file = fopen(path, "rb");
+	if(file == NULL)
+	{
+		printf("File at path %s is unable to be opened.", path);
+		exit(-1);
 	}
 
-	/* verify the type of file */ 
-	char filecode[4]; 
-	fread(filecode, 1, 4, fp); 
-	if (strncmp(filecode, "DDS ", 4) != 0) { 
-		fclose(fp); 
-		return 0; 
+	char filecode[4];
+	fread(filecode, 1, 4, file);
+	if(strncmp(filecode, "DDS ", 4) != 0)
+	{
+		fclose(file);
+		printf("File at path %s is not a DDS file.", path);
+		exit(-1);
 	}
-	
-	/* get the surface desc */ 
-	fread(&header, 124, 1, fp); 
 
-	unsigned int height      = *(unsigned int*)&(header[8 ]);
-	unsigned int width	     = *(unsigned int*)&(header[12]);
-	unsigned int linearSize	 = *(unsigned int*)&(header[16]);
+	// Read and interpret the file header (bytes 0 -> 124)
+	fread(&header, 124, 1, file);
+
+	unsigned int height = *(unsigned int*)&(header[8]);
+	unsigned int width = *(unsigned int*)&(header[12]);
+	unsigned int linearSize	= *(unsigned int*)&(header[16]);
 	unsigned int mipMapCount = *(unsigned int*)&(header[24]);
-	unsigned int fourCC      = *(unsigned int*)&(header[80]);
+	unsigned int formatCode = *(unsigned int*)&(header[80]);
 
-	unsigned char * buffer;
-	unsigned int bufsize;
-	/* how big is it going to be including all mipmaps? */ 
-	bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize; 
-	buffer = (unsigned char*)malloc(bufsize * sizeof(unsigned char)); 
-	fread(buffer, 1, bufsize, fp); 
-	/* close the file pointer */ 
-	fclose(fp);
+	// Read and interpret the raw texture data (bytes 125 -> bufferSize)
 
-//	unsigned int components  = (fourCC == FOURCC_DXT1) ? 3 : 4; 
+	unsigned char* buffer;
+	unsigned int bufferSize;
+
+	bufferSize = mipMapCount > 1 ? linearSize * 2 : linearSize;
+	buffer = (unsigned char*) malloc(bufferSize * sizeof(char));
+
+	fread(buffer, 1, bufferSize, file);
+	fclose(file);
+
+	// Determine what DXT format it's in (DXT1 / DXT3 / DXT5)
+
 	unsigned int format;
-	switch(fourCC) 
-	{ 
-	case FOURCC_DXT1: 
-		format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT; 
-		break; 
-	case FOURCC_DXT3: 
-		format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT; 
-		break; 
-	case FOURCC_DXT5: 
-		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; 
-		break; 
-	default: 
-		free(buffer); 
-		return 0; 
+	switch(formatCode)
+	{
+		case DXT1:
+			format = GL_DXT1;
+			break;
+		case DXT3:
+			format = GL_DXT3;
+			break;
+		case DXT5:
+			format = GL_DXT5;
+			break;
+		default:
+			free(buffer);
+			printf("File at path %s is not a DXT1/3/5 formatted file.", path);
+			exit(-1);
 	}
 
-	// Create one OpenGL texture
+	// Pass it to OpenGL
+
 	GLuint textureID;
 	glGenTextures(1, &textureID);
-
-	// "Bind" the newly created texture : all future texture functions will modify this texture
 	glBindTexture(GL_TEXTURE_2D, textureID);
-	glPixelStorei(GL_UNPACK_ALIGNMENT,1);	
-	
-	unsigned int blockSize = (format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16; 
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Sets we unpack on byte-alignment (mode 1)
+
+	// DXT1 uses 8-byte blocks, RGB instead of DXT3/5's RGBA and 16-byte blocks
+	unsigned int blockSize = (format == GL_DXT1) ? 8 : 16;
 	unsigned int offset = 0;
+	for(int level = 0; level < mipMapCount; level++)
+	{
+		unsigned int size = ( (width+3) / 4) * ( (height+3) / 4) * blockSize;
+		glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height, 0, size, buffer + offset);
 
-	/* load the mipmaps */ 
-	for (unsigned int level = 0; level < mipMapCount && (width || height); ++level) 
-	{ 
-		unsigned int size = ((width+3)/4)*((height+3)/4)*blockSize; 
-		glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height,  
-			0, size, buffer + offset); 
-
-		offset += size; 
-		width  /= 2; 
-		height /= 2; 
-
-		// Deal with Non-Power-Of-Two textures. This code is not included in the webpage to reduce clutter.
-		if(width < 1) width = 1;
-		if(height < 1) height = 1;
-
+		offset += size;
+		width /= 2;
+		height /= 2;
 	}
 
-	free(buffer); 
-
+	free(buffer);
 	return textureID;
 }
