@@ -3,10 +3,5 @@
 
 #include "GLFW/glfw3.h"
 
-typedef struct Texture {
-	int width;
-	int height;
-} Texture;
-
 GLuint texture_loadDDS(char* path);
 #endif

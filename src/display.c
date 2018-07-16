@@ -4,6 +4,7 @@
 #include "display.h"
 #include "linmath.h"
 #include "texture.h"
+#include "object.h"
 
 void callback_key(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
@@ -51,7 +52,7 @@ static GLfloat vertexBufferData[] = {
     1.0f,-1.0f, 1.0f
 };
 
-static const GLfloat uvBufferData[] = {
+static GLfloat uvBufferData[] = {
     0.000059f, 1.0f-0.000004f,
     0.000103f, 1.0f-0.336048f,
     0.335973f, 1.0f-0.335903f,
@@ -90,9 +91,7 @@ static const GLfloat uvBufferData[] = {
     0.667979f, 1.0f-0.335851f
 };
 
-static GLuint vertexBuffer;
-static GLuint uvBuffer;
-static GLuint texture;
+static Object* cube;
 
 static const GLchar* vertexShaderSrc = 
 	"#version 330 core\n"
@@ -195,20 +194,8 @@ Display* display_createDisplay(int width, int height)
 	glDepthFunc(GL_LESS);
 
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
-	
-	GLuint vertexArrayID;
-	glGenVertexArrays(1, &vertexArrayID);
-	glBindVertexArray(vertexArrayID);
 
-	glGenBuffers(1, &vertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &uvBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(uvBufferData), uvBufferData, GL_STATIC_DRAW);
-
-	texture = texture_loadDDS("textureTest.dds");
+	cube = object_buildObject(vertexBufferData, sizeof(vertexBufferData), uvBufferData, sizeof(uvBufferData), "textureTest.DDS");
 
 	GLuint programID = buildProgram();
 	
@@ -242,23 +229,22 @@ void display_tick(Display* display)
 	mat4x4_mul(mvp, mvp, projection);
 	mat4x4_mul(mvp, mvp, view);
 	mat4x4_mul(mvp, mvp, model);
-
 	GLuint matrixID = glGetUniformLocation(display-> programID, "mvp");
 	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &mvp[0][0]);
 
 	// vec3 model
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cube-> vertexBufferID);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
 	// vec3 vertexUV
 	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cube-> uvBufferID);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, cube-> textureID);
 
-	glDrawArrays(GL_TRIANGLES, 0, sizeof(vertexBufferData) / 12);
+	glDrawArrays(GL_TRIANGLES, 0, cube-> triangleCount);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 
